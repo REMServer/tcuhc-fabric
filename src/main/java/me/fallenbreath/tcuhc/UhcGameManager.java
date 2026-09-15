@@ -7,6 +7,7 @@ package me.fallenbreath.tcuhc;
 import me.fallenbreath.tcuhc.UhcGamePlayer.EnumStat;
 import me.fallenbreath.tcuhc.mixins.core.MinecraftServerAccessor;
 import me.fallenbreath.tcuhc.options.Options;
+import me.fallenbreath.tcuhc.pregen.PreGenBufferManager;
 import me.fallenbreath.tcuhc.task.*;
 import me.fallenbreath.tcuhc.util.*;
 import net.minecraft.block.BlockState;
@@ -66,6 +67,7 @@ public class UhcGameManager extends Taskable {
 	private final UhcPlayerManager playerManager;
 	private final UhcConfigManager configManager = new UhcConfigManager();
 	private final Options uhcOptions;
+	private final PreGenBufferManager preGenBufferManager;
 
 	private boolean isGamePlaying;
 	private boolean isGameEnded;
@@ -87,6 +89,7 @@ public class UhcGameManager extends Taskable {
 		playerManager = new UhcPlayerManager(this);
 		winnerList = new LastWinnerList(new File("lastwinners.txt"));
 		worldData = UhcWorldData.load();
+		preGenBufferManager = new PreGenBufferManager(this);
 	}
 
 	public MinecraftServer getMinecraftServer() { return mcServer; }
@@ -94,6 +97,7 @@ public class UhcGameManager extends Taskable {
 	public UhcPlayerManager getUhcPlayerManager() { return playerManager; }
 	public UhcConfigManager getConfigManager() { return configManager; }
 	public Options getOptions() { return uhcOptions; }
+	public PreGenBufferManager getPreGenBufferManager() { return preGenBufferManager; }
 	public boolean isGamePlaying() { return isGamePlaying; }
 	public boolean isConfiguring() { return configManager.isConfiguring(); }
 	private Optional<String> getCannotStartReason(boolean forceStart)
@@ -178,8 +182,13 @@ public class UhcGameManager extends Taskable {
 	{
 		this.displayHealth();
 		TaskScoreboard.hideScoreboard();
+		if (preloaded && preGenBufferManager.isActiveGeneration()) {
+			// A crash may happen after the preload marker is flushed but before the completion
+			// restart. Finish that durable job instead of leaving it stuck forever.
+			if (preGenBufferManager.onPregenerationComplete()) return;
+		}
 		if (!preloaded) {
-			if (uhcOptions.getBooleanOptionValue("pregenerateOnStart")) {
+			if (preGenBufferManager.isActiveGeneration() || uhcOptions.getBooleanOptionValue("pregenerateOnStart")) {
 				this.startPregenerateOverworld();
 				isPregenerating = true;
 			} else {
@@ -191,6 +200,7 @@ public class UhcGameManager extends Taskable {
 		}
 		SpawnPlatform.generatePlatform(this, getOverWorld());
 		this.addTask(new TaskHUDInfo(mcServer));
+		preGenBufferManager.installScheduler();
 		this.warnOnStaleTerrain();
 	}
 
@@ -263,6 +273,7 @@ public class UhcGameManager extends Taskable {
 		} catch (IOException e) {
 			LOG.warn("Failed to create preload marker", e);
 		}
+		preGenBufferManager.onPregenerationComplete();
 	}
 	
 	public boolean isPregenerating() {
@@ -348,6 +359,17 @@ public class UhcGameManager extends Taskable {
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to launch regen restart helper", e);
 		}
+	}
+
+	/** Starts the existing one-shot restart helper, then stops after all current tasks are canceled. */
+	public void restartServer(String reason) {
+		Path helperPath = getRegenRestartHelperPath();
+		launchRegenRestartHelper(helperPath);
+		LOG.info("Restart requested: {}", reason);
+		this.cancelTasks();
+		this.isPregenerating = false;
+		this.broadcastMessage("服务器即将重启，请稍后重新连接。");
+		this.mcServer.stop(false);
 	}
 	
 	public static void regenerateTerrain() {

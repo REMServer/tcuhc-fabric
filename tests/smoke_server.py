@@ -23,6 +23,8 @@ FATAL_MARKERS = (
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--allow-local", action="store_true", help="allow modifying the local run directory")
     parser.add_argument("--timeout", type=int, default=180)
@@ -43,7 +45,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    gradle = "gradlew.bat" if os.name == "nt" else "./gradlew"
+    gradle = str(ROOT / "gradlew.bat") if os.name == "nt" else str(ROOT / "gradlew")
     process = subprocess.Popen(
         [gradle, "runServer", "--console=plain"], cwd=ROOT,
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -86,7 +88,15 @@ def main() -> int:
         pass
     finally:
         if process.poll() is None:
-            process.terminate()
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+            else:
+                process.terminate()
             try:
                 process.wait(timeout=15)
             except subprocess.TimeoutExpired:

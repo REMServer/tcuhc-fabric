@@ -71,6 +71,11 @@ public final class OptionsPreset {
 		return new File(getDirectory(), checkName(name) + SUFFIX);
 	}
 
+	/** The validated preset file, for lifecycle features which must install it before a restart. */
+	public static File getFile(String name) {
+		return fileOf(name);
+	}
+
 	public static boolean exists(String name) {
 		return fileOf(name).isFile();
 	}

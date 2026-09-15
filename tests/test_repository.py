@@ -93,7 +93,7 @@ def main() -> int:
 
     command_source = (JAVA_ROOT / "me/fallenbreath/tcuhc/UhcGameCommand.java").read_text(encoding="utf-8")
     command_literals = set(re.findall(r'literal\("([A-Za-z]+)"\)', command_source))
-    expected = {"version", "select", "deathpos", "config", "reset", "regen", "start", "forceStart", "cancelStart", "stop", "option", "cancelRegen", "adjust", "givemorals", "debug", "preset"}
+    expected = {"version", "select", "deathpos", "config", "reset", "regen", "start", "forceStart", "cancelStart", "stop", "option", "cancelRegen", "adjust", "givemorals", "debug", "preset", "buffer"}
     c.check("public command tree contains every documented command group", expected <= command_literals, ", ".join(sorted(expected - command_literals)))
 
     for language in ("en.md", "zh-CN.md"):

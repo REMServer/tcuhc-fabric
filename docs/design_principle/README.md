@@ -17,6 +17,7 @@ stays consistent with the existing grain instead of fighting it.
 | [03-worldgen.md](03-worldgen.md) | Structures, features, MARINE generator, pregeneration, deferred placement |
 | [04-mixin-and-porting.md](04-mixin-and-porting.md) | Mixin conventions and the 1.18 → 1.21.1 migration rules already applied |
 | [05-invariants-and-findings.md](05-invariants-and-findings.md) | Hard invariants, plus concrete defects found during this analysis |
+| [06-pre-gen-buffer.md](06-pre-gen-buffer.md) | Requirements and scope for per-preset pre-generated world slots |
 
 ## The five principles in one screen
 

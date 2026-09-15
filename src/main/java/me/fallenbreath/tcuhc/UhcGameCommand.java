@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.fallenbreath.tcuhc.options.Option;
 import me.fallenbreath.tcuhc.options.Options;
 import me.fallenbreath.tcuhc.options.OptionsPreset;
+import me.fallenbreath.tcuhc.pregen.PreGenBufferManager;
 import me.fallenbreath.tcuhc.task.TaskOnce;
 import me.fallenbreath.tcuhc.util.PlayerItems;
 import me.fallenbreath.tcuhc.util.Position;
@@ -57,6 +58,8 @@ public class UhcGameCommand
 	private static boolean regen_confirm = false;
 	private static boolean start_confirm = false;
 	private static boolean force_start_confirm = false;
+	private static String bufferUsePresetPending = null;
+	private static int bufferUseSlotPending = -1;
 	private static boolean isOp(ServerCommandSource source)
 	{
 		return source.hasPermissionLevel(2);
@@ -246,6 +249,60 @@ public class UhcGameCommand
 										)
 								)
 						)
+				).
+				then(literal("buffer").
+						requires(UhcGameCommand::isOp).
+						executes(c -> bufferList(c.getSource(), null)).
+						then(literal("list").
+								executes(c -> bufferList(c.getSource(), null)).
+								then(argument("preset", string()).
+										suggests((c, b) -> suggestMatching(OptionsPreset.listNames(), b)).
+										executes(c -> bufferList(c.getSource(), getString(c, "preset")))
+								)
+						).
+						then(literal("status").executes(c -> bufferList(c.getSource(), null))).
+						then(literal("enable").executes(c -> bufferEnabled(c.getSource(), true))).
+						then(literal("disable").executes(c -> bufferEnabled(c.getSource(), false))).
+						then(literal("interval").
+								then(argument("seconds", integer(30, 86400)).
+										executes(c -> bufferInterval(c.getSource(), getInteger(c, "seconds")))
+								)
+						).
+						then(literal("generate").
+								then(argument("preset", string()).
+										suggests((c, b) -> suggestMatching(OptionsPreset.listNames(), b)).
+										then(argument("slot", integer(1, PreGenBufferManager.SLOT_COUNT)).
+												executes(c -> bufferGenerate(c.getSource(), getString(c, "preset"), getInteger(c, "slot")))
+										)
+								)
+						).
+						then(literal("name").
+								then(argument("preset", string()).
+										suggests((c, b) -> suggestMatching(OptionsPreset.listNames(), b)).
+										then(argument("slot", integer(1, PreGenBufferManager.SLOT_COUNT)).
+												then(argument("name", string()).
+														executes(c -> bufferName(c.getSource(), getString(c, "preset"), getInteger(c, "slot"), getString(c, "name")))
+												)
+										)
+								)
+						).
+						then(literal("use").
+								then(argument("preset", string()).
+										suggests((c, b) -> suggestMatching(OptionsPreset.listNames(), b)).
+										then(argument("slot", integer(1, PreGenBufferManager.SLOT_COUNT)).
+												executes(c -> bufferUse(c.getSource(), getString(c, "preset"), getInteger(c, "slot"), false)).
+												then(literal("confirm").executes(c -> bufferUse(c.getSource(), getString(c, "preset"), getInteger(c, "slot"), true)))
+										)
+								)
+						).
+						then(literal("clear").
+								then(argument("preset", string()).
+										suggests((c, b) -> suggestMatching(OptionsPreset.listNames(), b)).
+										then(argument("slot", integer(1, PreGenBufferManager.SLOT_COUNT)).
+												executes(c -> bufferClear(c.getSource(), getString(c, "preset"), getInteger(c, "slot")))
+										)
+								)
+						)
 				);
 		dispatcher.register(rootNode);
 	}
@@ -340,6 +397,99 @@ public class UhcGameCommand
 		sender.sendFeedback(() -> Text.literal("  /uhc reset gameplay - 重置玩法、时间和队伍设置"), false);
 		sender.sendFeedback(() -> Text.literal("  /uhc reset generation - 重置矿物、宝箱、商人和怪物生成频率（需要 /uhc regen）"), false);
 		return 1;
+	}
+
+	private static PreGenBufferManager buffer() { return UhcGameManager.instance.getPreGenBufferManager(); }
+
+	private static int bufferList(ServerCommandSource sender, String preset)
+	{
+		List<PreGenBufferManager.SlotInfo> slots = buffer().list(preset);
+		sender.sendFeedback(() -> Text.literal("世界预生成缓冲区：" + (buffer().isEnabled() ? "已启用" : "已关闭")
+				+ "，检查间隔 " + buffer().getIntervalSeconds() + " 秒"), false);
+		if (slots.isEmpty()) sender.sendFeedback(() -> Text.literal("  没有已保存的预设。"), false);
+		for (PreGenBufferManager.SlotInfo slot : slots)
+		{
+			String line = "  " + slot.preset + "/" + slot.slot + " " + bufferStateLabel(slot.state)
+					+ (slot.name.isEmpty() ? "" : " [" + slot.name + "]")
+					+ (slot.createdAt.isEmpty() ? "" : " " + slot.createdAt);
+			sender.sendFeedback(() -> Text.literal(line), false);
+		}
+		return 1;
+	}
+
+	private static String bufferStateLabel(String state)
+	{
+		switch (state)
+		{
+			case "EMPTY": return "空闲";
+			case "GENERATING": return "生成中";
+			case "READY": return "就绪";
+			case "STALE": return "预设已变更";
+			case "FAILED": return "失败";
+			case "ACTIVE": return "使用中";
+			default: return state;
+		}
+	}
+
+	private static int bufferEnabled(ServerCommandSource sender, boolean enabled)
+	{
+		try { buffer().setEnabled(enabled); }
+		catch (IOException e) { return bufferError(sender, e); }
+		sender.sendFeedback(() -> Text.literal("世界预生成缓冲区已" + (enabled ? "启用。" : "关闭。")), true);
+		return 1;
+	}
+
+	private static int bufferInterval(ServerCommandSource sender, int seconds)
+	{
+		try { buffer().setIntervalSeconds(seconds); }
+		catch (Exception e) { return bufferError(sender, e); }
+		sender.sendFeedback(() -> Text.literal("世界预生成缓冲区检查间隔已设为 " + seconds + " 秒。"), true);
+		return 1;
+	}
+
+	private static int bufferGenerate(ServerCommandSource sender, String preset, int slot)
+	{
+		try { buffer().generate(preset, slot); }
+		catch (Exception e) { return bufferError(sender, e); }
+		return 1;
+	}
+
+	private static int bufferName(ServerCommandSource sender, String preset, int slot, String name)
+	{
+		try { buffer().name(preset, slot, name); }
+		catch (Exception e) { return bufferError(sender, e); }
+		sender.sendFeedback(() -> Text.literal("已将缓冲槽位 " + preset + "/" + slot + " 命名为 " + name + "。"), false);
+		return 1;
+	}
+
+	private static int bufferUse(ServerCommandSource sender, String preset, int slot, boolean confirmed)
+	{
+		if (!confirmed || !preset.equals(bufferUsePresetPending) || slot != bufferUseSlotPending)
+		{
+			bufferUsePresetPending = preset;
+			bufferUseSlotPending = slot;
+			sender.sendFeedback(() -> Text.literal(Formatting.YELLOW + "使用预生成槽位会重启服务器并切换当前世界。确认请输入 /uhc buffer use " + preset + " " + slot + " confirm"), false);
+			return 1;
+		}
+		bufferUsePresetPending = null;
+		bufferUseSlotPending = -1;
+		try { buffer().use(preset, slot); }
+		catch (Exception e) { return bufferError(sender, e); }
+		return 1;
+	}
+
+	private static int bufferClear(ServerCommandSource sender, String preset, int slot)
+	{
+		try { buffer().clear(preset, slot); }
+		catch (Exception e) { return bufferError(sender, e); }
+		sender.sendFeedback(() -> Text.literal("已清空缓冲槽位 " + preset + "/" + slot + "。"), true);
+		return 1;
+	}
+
+	private static int bufferError(ServerCommandSource sender, Exception error)
+	{
+		sender.sendError(Text.literal("世界预生成缓冲区：" + error.getMessage()));
+		return 0;
 	}
 
 	private static int executeReset(ServerCommandSource sender, boolean generation)

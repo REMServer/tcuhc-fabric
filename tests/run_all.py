@@ -14,6 +14,7 @@ SUITES = [
     ROOT / "docs/agent_run/2026-09-12-issue-fixes/tests/test_java_syntax.py",
     ROOT / "docs/agent_run/2026-09-12-issue-fixes/tests/test_structural.py",
     ROOT / "docs/agent_run/2026-09-12-issue-fixes/tests/test_noise.py",
+    ROOT / "docs/agent_run/2026-09-14-pre-gen-buffer/tests/test_buffer_contract.py",
 ]
 
 
