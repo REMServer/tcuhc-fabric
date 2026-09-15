@@ -108,24 +108,24 @@ Example: `/uhc preset save tournament`, followed later by `/uhc preset diff tour
 
 ## Pre-generation buffer
 
-The buffer keeps three world slots for every saved preset. It is disabled by default; when enabled, it checks for an `EMPTY` slot every 300 seconds by default. The interval can be changed immediately to 30–86400 seconds. Automatic and manual generation start only while no players are online, no match is active, and no other pre-generation is running, so these lifecycle commands are normally issued from the server console. All buffer commands require permission level 2.
+The buffer keeps three world slots for every saved preset. It is disabled by default. When enabled, its first automatic check occurs after one complete interval (300 seconds by default), and subsequent checks use the same delay. Changing the interval immediately restarts that countdown; valid values are 30–86400 seconds. Automatic and manual generation start only while no players are online, no match is active, and no other pre-generation is running, so these lifecycle commands are normally issued from the server console. All buffer commands require permission level 2.
 
 | Command | Purpose |
 |---|---|
 | `/uhc buffer`, `/uhc buffer status`, or `/uhc buffer list` | Show whether automatic filling is enabled, the current interval, and all three slots for every preset. |
 | `/uhc buffer list <preset>` | Show the three slots for one saved preset. |
-| `/uhc buffer enable` | Enable automatic filling during idle periods. |
+| `/uhc buffer enable` | Enable automatic filling during idle periods. The first check occurs after the configured interval. |
 | `/uhc buffer disable` | Stop starting automatic fills. An already-running generation job is not canceled. |
-| `/uhc buffer interval <seconds>` | Set the automatic check interval to 30–86400 seconds. |
+| `/uhc buffer interval <seconds>` | Set the automatic check interval to 30–86400 seconds and restart its countdown. |
 | `/uhc buffer generate <preset> <slot>` | Fill slot `1`, `2`, or `3` manually. The slot must be `EMPTY` or `FAILED`. |
 | `/uhc buffer name <preset> <slot> <name>` | Set an ASCII display name using 1–32 letters, digits, `_`, or `-`. The name never becomes a filesystem path. |
 | `/uhc buffer use <preset> <slot>` | Request activation of a `READY` slot and print the confirmation command. |
 | `/uhc buffer use <preset> <slot> confirm` | Confirm activation. This installs the slot's saved preset snapshot, switches worlds, and restarts the server. |
-| `/uhc buffer clear <preset> <slot>` | Permanently delete a non-active, non-generating slot so it becomes `EMPTY`. |
+| `/uhc buffer clear <preset> <slot>` | Permanently delete an eligible slot so it becomes `EMPTY`. Current, generating, and pending-activation slots are protected. |
 
 A fill uses two automatic restarts: the first boots the dedicated server into the slot world and pre-generates it; after completion, the second restores the original world and configuration. Do not start a match during this cycle. Activation uses one restart. The selected slot becomes `ACTIVE`; when a different buffered slot is activated later, the previous active slot is deleted and becomes `EMPTY`, allowing automatic filling to replenish it.
 
-Slot states are `EMPTY` (available), `GENERATING`, `READY`, `STALE` (the saved preset changed after generation), `FAILED`, and `ACTIVE` (the server's selected world). Each generated slot retains the complete preset snapshot and its fingerprint. A stale slot cannot be activated; clear and regenerate it. `/uhc buffer clear` cannot clear the world selected in `server.properties` or an active generation job. See [the recovery guide](../agent_run/2026-09-14-pre-gen-buffer/RECOVERY.md) before manually changing buffer files after an interrupted restart.
+Slot states are `EMPTY` (available), `GENERATING`, `READY`, `STALE` (the saved preset changed after generation), `FAILED`, and `ACTIVE` (the server's selected world). Each generated slot retains the complete preset snapshot and its fingerprint. A stale slot cannot be activated; clear and regenerate it. `/uhc buffer clear` cannot clear the world selected in `server.properties`, an active generation job, or a slot whose activation is pending. Automatic filling also pauses while generation or activation metadata is pending. See [the recovery guide](../agent_run/2026-09-14-pre-gen-buffer/RECOVERY.md) before manually changing buffer files after an interrupted restart.
 
 ## Match adjustment and diagnostics
 

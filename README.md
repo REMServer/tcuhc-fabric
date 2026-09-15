@@ -11,6 +11,7 @@ This branch targets **Minecraft 1.21.1** and currently builds **TC UHC 1.2.9**.
 - In-game books for team selection, match configuration, and administrative adjustment.
 - Configurable teams, difficulty, weather, borders, match phases, loot, ores, merchants, mobs, and pre-generation.
 - Overworld and optional Nether pre-generation with progress and estimated-time reporting.
+- A preset-aware pre-generation buffer with three reusable world slots per saved preset.
 - Saved configuration presets with list, inspect, compare, load, and delete operations.
 - Custom structures, trades, recipes, loot, death handling, scoring, and post-match spectator support.
 - Dedicated-server operation with no client-side mod requirement.
@@ -57,6 +58,12 @@ Settings can be changed through the in-game configuration book or `/uhc option <
 - Gameplay settings normally apply to the next match.
 
 Use `/uhc preset save <name>` to save a complete configuration and `/uhc preset load <name>` to restore it. The command manuals list every option, range, default, and preset operation.
+
+## World pre-generation buffer
+
+The optional buffer prepares up to three worlds for each saved preset while the server is idle, so an operator can activate a ready world instead of waiting for pre-generation before a match. It is disabled by default. Enable it with `/uhc buffer enable`, inspect it with `/uhc buffer status`, and activate a ready slot with `/uhc buffer use <preset> <slot>` followed by the displayed confirmation command.
+
+Buffer generation starts only when no players are online, no match is active, and no other pre-generation is running. Filling a slot requires two automatic server restarts; activating one requires a single restart. The server installation must therefore provide the restart/start helpers described in the [recovery and operations guide](docs/agent_run/2026-09-14-pre-gen-buffer/RECOVERY.md). See the buffer sections in the [English command reference](docs/commands/en.md#pre-generation-buffer) or [简体中文命令参考](docs/commands/zh-CN.md#世界预生成缓冲区) for every command, slot state, interval limit, and safety rule.
 
 ## Building from source
 
@@ -127,4 +134,4 @@ The project is distributed under the terms in [LICENSE](LICENSE).
 
 ## 中文简介
 
-TC UHC 是一个服务端 Fabric 模组，用于组织完整的极限生存竞技对局。当前分支支持 Minecraft 1.21.1、Fabric Loader 0.15.0 及以上版本和 Java 21；原版客户端无需安装模组即可加入。安装、编译、自动测试和发布流程见上文，完整中文命令说明请参阅[简体中文命令参考](docs/commands/zh-CN.md)。
+TC UHC 是一个服务端 Fabric 模组，用于组织完整的极限生存竞技对局。当前分支支持 Minecraft 1.21.1、Fabric Loader 0.15.0 及以上版本和 Java 21；原版客户端无需安装模组即可加入。可选的世界预生成缓冲区会在服务器空闲时为每个配置预设准备 3 个世界槽位，并允许管理员通过一次重启启用已就绪的世界；该功能默认关闭，填充槽位需要自动重启两次。安装、编译、自动测试和发布流程见上文，全部缓冲区命令、状态与安全限制请参阅[简体中文命令参考](docs/commands/zh-CN.md#世界预生成缓冲区)。
