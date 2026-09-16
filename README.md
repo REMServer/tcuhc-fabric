@@ -14,6 +14,9 @@ This branch targets **Minecraft 1.21.1** and currently builds **TC UHC 1.2.9**.
 - A preset-aware pre-generation buffer with three reusable world slots per saved preset.
 - Saved configuration presets with list, inspect, compare, load, and delete operations.
 - Custom structures, trades, recipes, loot, death handling, scoring, and post-match spectator support.
+- An Iceland NBT lobby with safe spawn positions, creative editing, and protection for its blocks and decorations.
+- A match sidebar with minute/second countdowns, alive player/team totals, and compact final boundary information.
+- Independent enchanted-book rewards in bonus chests, using battle-specific pools and valid enchantment levels.
 - Dedicated-server operation with no client-side mod requirement.
 
 ## Requirements
@@ -66,6 +69,12 @@ The optional buffer prepares up to three worlds for each saved preset while the 
 Buffer generation starts only when no players are online, no match is active, and no other pre-generation is running. Filling a slot requires two automatic server restarts; activating one requires a single restart. The server installation must therefore provide the restart/start helpers described in the [recovery and operations guide](docs/agent_run/2026-09-14-pre-gen-buffer/RECOVERY.md). See the buffer sections in the [English command reference](docs/commands/en.md#pre-generation-buffer) or [简体中文命令参考](docs/commands/zh-CN.md#世界预生成缓冲区) for every command, slot state, interval limit, and safety rule.
 
 ## Building from source
+
+For the current source branch, see the [Iceland lobby guide](docs/lobby-iceland.md),
+[sidebar rules](docs/sidebar.md), and [enchanted-book rewards](docs/enchanted-book-generation.md).
+Lobby or display code/template changes require a server restart. Book reward changes
+apply only to newly filled bonus chests; existing items are retained. These source
+changes do not update the previously published 1.2.9 release artifact.
 
 Java 21 is required. On Windows:
 
@@ -123,6 +132,10 @@ python scripts/github_release.py --release
 - [命令参考 — 简体中文](docs/commands/zh-CN.md)
 - [Design principles](docs/design_principle/README.md)
 - [Development and verification notes](docs/agent_run/)
+- [Iceland NBT lobby — 简体中文](docs/lobby-iceland.md)
+- [Match sidebar — 简体中文](docs/sidebar.md)
+- [Enchanted-book rewards — 简体中文](docs/enchanted-book-generation.md)
+- [Lobby, sidebar, and reward development record](docs/agent_run/2026-09-16-lobby-change/README.md)
 
 ## Credits and license
 
@@ -135,3 +148,5 @@ The project is distributed under the terms in [LICENSE](LICENSE).
 ## 中文简介
 
 TC UHC 是一个服务端 Fabric 模组，用于组织完整的极限生存竞技对局。当前分支支持 Minecraft 1.21.1、Fabric Loader 0.15.0 及以上版本和 Java 21；原版客户端无需安装模组即可加入。可选的世界预生成缓冲区会在服务器空闲时为每个配置预设准备 3 个世界槽位，并允许管理员通过一次重启启用已就绪的世界；该功能默认关闭，填充槽位需要自动重启两次。安装、编译、自动测试和发布流程见上文，全部缓冲区命令、状态与安全限制请参阅[简体中文命令参考](docs/commands/zh-CN.md#世界预生成缓冲区)。
+
+当前源码使用可编辑并受保护的 Iceland NBT 大厅。侧边栏沿用白色标签、红色数值，显示分钟秒数、存活人数与队伍比例，并合并后期边界坐标。奖励箱独立抽取附魔书，不生成效率或耐久，等级不超过原版上限。详细规则和验证范围见[本次开发记录](docs/agent_run/2026-09-16-lobby-change/README.md)；这些修改尚未发布为新的 Release。

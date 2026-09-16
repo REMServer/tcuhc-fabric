@@ -694,7 +694,7 @@ public class UhcGameManager extends Taskable {
 		// Give-or-refresh, never a blind insert: running /uhc config twice used to leave the
 		// operator holding two config books, and every later edit refreshed only one of them.
 		playerManager.giveOrRefreshConfigBook(operator);
-		if (!UhcGameManager.instance.isGamePlaying()) SpawnPlatform.generateSafePlatform(getOverWorld());
+		if (!UhcGameManager.instance.isGamePlaying()) SpawnPlatform.validateSpawnPositions(getOverWorld());
 	}
 
 	/**
@@ -721,12 +721,13 @@ public class UhcGameManager extends Taskable {
 			scoreboard.removeTeam((Team) team);
 		}
 
+		// Restore the template and its safe positions before teleporting players back.
+		this.generateSpawnPlatform();
 		playerManager.resetForNextGame();
 		// Back to vanilla behaviour outside a match; initWorlds turns it on again next game.
 		for (ServerWorld world : mcServer.getWorlds()) {
 			world.getGameRules().get(GameRules.DO_IMMEDIATE_RESPAWN).set(false, mcServer);
 		}
-		this.generateSpawnPlatform();
 		this.addTask(new TaskHUDInfo(mcServer));
 		this.broadcastMessage(Formatting.GOLD + "已返回大厅，可以配置下一局游戏了。");
 	}

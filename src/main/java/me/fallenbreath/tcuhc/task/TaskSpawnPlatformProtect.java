@@ -19,8 +19,8 @@ public class TaskSpawnPlatformProtect extends Task {
 	@Override
 	public void onUpdate() {
 		for (ServerPlayerEntity player : gameManager.getServerPlayerManager().getPlayerList()) {
-			if (player.isAlive() && !player.isCreative() && !player.isSpectator()) {
-				if (player.getPos().getY() < SpawnPlatform.height - 20 && Math.abs(player.getPos().getX()) < 64 && Math.abs(player.getPos().getZ()) < 64) {
+			if (player.getWorld() == gameManager.getOverWorld() && player.isAlive() && !player.isCreative() && !player.isSpectator()) {
+				if (SpawnPlatform.shouldReturnPlayer(player)) {
 					gameManager.getUhcPlayerManager().randomSpawnPosition(player);
 				}
 			}

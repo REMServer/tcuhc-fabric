@@ -6,9 +6,11 @@
   "mixins": [
     "ServerPropertiesHandlerMixin",
     "block.ChestBlockEntityMixin",
+    "block.LobbyBlockTicksMixin",
     "compat.carpet.EntityPlayerMPFakeMixin",
     "core.CommandManagerMixin",
     "core.LevelStorageMixin",
+    "core.LobbyInteractionMixin",
     "core.MinecraftServerAccessor",
     "core.MinecraftServerMixin",
     "core.PlayerManagerMixin",

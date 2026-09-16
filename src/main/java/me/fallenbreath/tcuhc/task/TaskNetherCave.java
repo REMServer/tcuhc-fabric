@@ -14,10 +14,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.scoreboard.ScoreAccess;
-import net.minecraft.scoreboard.ScoreHolder;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.util.Formatting;
@@ -36,8 +32,6 @@ public class TaskNetherCave extends TaskTimer {
 	private final int netherCloseTime, caveCloseTime, gameTime, borderFinal;
 
 	private int finalX, finalZ, finalTime, finalMinY, finalMaxY;
-
-	public static final String[] lines = { "边界最低 Y：", "边界最高 Y：", "边界中心 X：", "边界中心 Z：" };
 
 	public TaskNetherCave() {
 		super(0, 20);
@@ -132,18 +126,8 @@ public class TaskNetherCave extends TaskTimer {
 			float minY = world.getBottomY() + partial * (finalMinY - world.getBottomY());
 			float maxY = world.getTopY() - partial * (world.getTopY() - finalMaxY);
 
-			Scoreboard scoreboard = UhcGameManager.instance.getMainScoreboard();
-			ScoreboardObjective objective = scoreboard.getNullableObjective(TaskScoreboard.scoreName);
-			if (objective != null) {
-				ScoreAccess scoreMinY = scoreboard.getOrCreateScore(ScoreHolder.fromName(lines[0]), objective);
-				ScoreAccess scoreMaxY = scoreboard.getOrCreateScore(ScoreHolder.fromName(lines[1]), objective);
-				ScoreAccess scoreCenterX = scoreboard.getOrCreateScore(ScoreHolder.fromName(lines[2]), objective);
-				ScoreAccess scoreCenterZ = scoreboard.getOrCreateScore(ScoreHolder.fromName(lines[3]), objective);
-				scoreMinY.setScore((int) Math.ceil(minY));
-				scoreMaxY.setScore((int) Math.floor(maxY));
-				scoreCenterX.setScore(Math.round(partial * finalX));
-				scoreCenterZ.setScore(Math.round(partial * finalZ));
-			}
+			TaskScoreboard.updateFinalBoundary((int) Math.ceil(minY), (int) Math.floor(maxY),
+					Math.round(partial * finalX), Math.round(partial * finalZ));
 
 			for (UhcGamePlayer player : combatPlayers) {
 				player.getRealPlayer().ifPresent(playermp -> {
