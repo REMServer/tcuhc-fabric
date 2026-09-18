@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITES = [
+    ROOT / "tests/test_lobby_rotation.py",
     ROOT / "tests/test_compass_hint.py",
     ROOT / "tests/test_repository.py",
     ROOT / "scripts/audit_mixins.py",

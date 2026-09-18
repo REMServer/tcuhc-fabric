@@ -10,6 +10,8 @@ import java.util.Random;
 public class UhcWorldData
 {
 	public int spawnPlatformHeight = -1;
+	/** Fixed for this world; a confirmed regen selects the next template. */
+	public String lobbyTemplate = null;
 	public StructureType netherFortressType = StructureType.randomChoose();
 
 	/**

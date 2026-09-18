@@ -36,12 +36,11 @@ import java.util.UUID;
 
 public class SpawnPlatform {
 	private static final int DEFAULT_HEIGHT = 160;
-	private static final int SPAWN_FLOOR_OFFSET = 29;
-	private static final Identifier TEMPLATE = TcUhcMod.id("lobby/iceland");
 	private static final String ENTITY_TAG = "tcuhc_lobby";
 	public static int height = DEFAULT_HEIGHT;
 	private static BlockBox platformBounds;
 	private static BlockPos[] spawnPositions;
+	private static int returnHeight;
 	private static boolean active;
 	private static String decorationGeneration = "";
 
@@ -87,8 +86,13 @@ public class SpawnPlatform {
 	}
 
 	public static void generatePlatform(UhcGameManager gameManager, ServerWorld world) {
-		StructureTemplate template = world.getStructureTemplateManager().getTemplate(TEMPLATE)
-				.orElseThrow(() -> new IllegalStateException("Missing lobby template: " + TEMPLATE));
+		UhcWorldData worldData = gameManager.getWorldData();
+		String lobbyId = worldData.lobbyTemplate != null ? worldData.lobbyTemplate
+				: LobbyRotation.current(UhcGameManager.getWorldRootPath());
+		LobbyDefinition lobby = LobbyDefinition.byId(lobbyId);
+		Identifier templateId = TcUhcMod.id("lobby/" + lobby.id);
+		StructureTemplate template = world.getStructureTemplateManager().getTemplate(templateId)
+				.orElseThrow(() -> new IllegalStateException("Missing lobby template: " + templateId));
 		Vec3i size = template.getSize();
 		sampleTerrainHeight(gameManager, world, size.getY());
 		BlockPos origin = new BlockPos(-size.getX() / 2, height, -size.getZ() / 2);
@@ -114,17 +118,16 @@ public class SpawnPlatform {
 		template.readNbt(world.getRegistryManager().getWrapperOrThrow(RegistryKeys.BLOCK), data);
 		if (!template.place(world, origin, origin, placement, world.getRandom(), Block.NOTIFY_LISTENERS | Block.FORCE_STATE)) {
 			active = false;
-			throw new IllegalStateException("Failed to place lobby template: " + TEMPLATE);
+			throw new IllegalStateException("Failed to place lobby template: " + templateId);
 		}
-		// Iceland's central paths are 29 blocks above the bottom of its floating island.
-		spawnPositions = new BlockPos[] {
-				origin.add(24, SPAWN_FLOOR_OFFSET, 23), origin.add(26, SPAWN_FLOOR_OFFSET, 23),
-				origin.add(28, SPAWN_FLOOR_OFFSET, 23)
-		};
+		spawnPositions = lobby.floors.stream().map(pos -> origin.add(pos.x(), pos.y(), pos.z())).toArray(BlockPos[]::new);
+		returnHeight = java.util.Arrays.stream(spawnPositions).mapToInt(BlockPos::getY).min().orElseThrow() - 12;
 		validateSpawnPositions(world);
+		worldData.lobbyTemplate = lobby.id;
+		worldData.save();
 		gameManager.addTask(new TaskSpawnPlatformProtect(gameManager));
 		UhcGameManager.LOG.info("Placed lobby template {} at {} (size {}), spawn positions {}",
-				TEMPLATE, origin, size, (Object) spawnPositions);
+				templateId, origin, size, (Object) spawnPositions);
 	}
 
 	public static void validateSpawnPositions(World world) {
@@ -145,7 +148,7 @@ public class SpawnPlatform {
 	public static boolean shouldReturnPlayer(ServerPlayerEntity player) {
 		if (!active || player.getWorld().getRegistryKey() != World.OVERWORLD) return false;
 		// Return players before they fall through the island's lower decorative layers.
-		return player.getY() < height + SPAWN_FLOOR_OFFSET - 12
+		return player.getY() < returnHeight
 				|| player.getX() < platformBounds.getMinX() - 4 || player.getX() > platformBounds.getMaxX() + 5
 				|| player.getZ() < platformBounds.getMinZ() - 4 || player.getZ() > platformBounds.getMaxZ() + 5;
 	}

@@ -1,8 +1,10 @@
 # Iceland 出生大厅（Minecraft 1.21.1）
 
-当前大厅使用 `tcuhc:lobby/iceland`，资源文件是
+Iceland 大厅使用 `tcuhc:lobby/iceland`，资源文件是
 `src/main/resources/data/tcuhc/structure/lobby/iceland.nbt`。
 客户端仍可使用原版 Minecraft 1.21.1，无需安装 WorldEdit 或客户端模组。
+
+现在确认执行 `/uhc regen` 会按四图顺序轮换大厅，普通重启和赛后返回保留当前大厅；见 [大厅轮换说明](lobby-rotation.md)。下文介绍 Iceland 模板本身。
 
 ## 来源与转换
 

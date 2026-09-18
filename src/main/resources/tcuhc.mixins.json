@@ -7,6 +7,8 @@
     "ServerPropertiesHandlerMixin",
     "block.ChestBlockEntityMixin",
     "block.LobbyBlockTicksMixin",
+    "block.LobbyFarmlandMixin",
+    "block.LobbyNetherPortalMixin",
     "compat.carpet.EntityPlayerMPFakeMixin",
     "core.CommandManagerMixin",
     "core.LevelStorageMixin",

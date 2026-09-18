@@ -22,7 +22,7 @@
 | `/uhc reset` | 解释可用的重置范围；单独执行不会修改任何配置。 | `/uhc reset` |
 | `/uhc reset gameplay` | 把玩法、时间、队伍及启动选项恢复为模组默认值。旧写法：`/uhc reset 0`。 | `/uhc reset gameplay` |
 | `/uhc reset generation` | 把世界生成频率配置恢复为默认值，需要重新生成世界后生效。旧写法：`/uhc reset 1`。 | `/uhc reset generation` |
-| `/uhc regen` | 请求删除并重新生成当前比赛世界；再次输入相同命令确认。 | 连续两次 `/uhc regen` |
+| `/uhc regen` | 请求删除并重新生成当前比赛世界，同时轮换到下一座出生大厅；再次输入相同命令确认。 | 连续两次 `/uhc regen` |
 | `/uhc cancelRegen` | 取消等待确认的世界重新生成。 | `/uhc cancelRegen` |
 | `/uhc start` | 完成就绪检查后请求正常开局；再次输入确认。 | 连续两次 `/uhc start` |
 | `/uhc forceStart` | 跳过预生成就绪条件请求开局；再次输入确认。 | 连续两次 `/uhc forceStart` |
