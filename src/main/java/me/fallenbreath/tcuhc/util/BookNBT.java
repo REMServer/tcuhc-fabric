@@ -58,9 +58,17 @@ public class BookNBT {
 		// The middle value enters chat-input mode so multi-page books do not need custom client UI.
 		return opt.map(option -> createTextEvent(option.getName(), null, option.getDescription(), Formatting.BLUE)
 				.append(createTextEvent(" < ", "/uhc option " + option.getId() + " sub", option.getDecString(), Formatting.RED))
-				.append(createTextEvent(option.getStringValue(), "/uhc option " + option.getId() + " set", "点击输入数值", Formatting.GOLD))
+				.append(createTextEvent(getOptionDisplayValue(option), "/uhc option " + option.getId() + " set",
+						option.getId().equals("compassInterval") ? "输入 0 为自动，或输入 1～300 秒" : "点击输入数值", Formatting.GOLD))
 				.append(createTextEvent(" >", "/uhc option " + option.getId() + " add", option.getIncString(), Formatting.GREEN))
 				.append(Text.literal("\n"))).orElse(Text.literal("未知配置项"));
+	}
+
+	private static String getOptionDisplayValue(Option option) {
+		if (option.getId().equals("compassInterval")) {
+			return option.getIntegerValue() == 0 ? "自动" : option.getIntegerValue() + "秒";
+		}
+		return option.getStringValue();
 	}
 
 	public static int getConfigBookPageCount()
@@ -147,7 +155,9 @@ public class BookNBT {
 						.append(createOptionText(options.getOption("levelType")))
 						.append(createOptionText(options.getOption("disableOceanBiomes")))
 						.append(createOptionText(options.getOption("randomTeams")))
-						.append(createOptionText(options.getOption("teamCount")));
+						.append(createOptionText(options.getOption("teamCount")))
+						.append(createOptionText(options.getOption("enemyCompass")))
+						.append(createOptionText(options.getOption("compassInterval")));
 				break;
 			case 1:
 				text = Text.empty()

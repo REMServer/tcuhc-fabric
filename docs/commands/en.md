@@ -22,7 +22,7 @@ This document covers the commands in the current TC UHC build. `<value>` is requ
 | `/uhc reset` | Explain the available reset scopes; it does not change settings by itself. | `/uhc reset` |
 | `/uhc reset gameplay` | Restore gameplay, timing, team, and server-start options to mod defaults. Legacy alias: `/uhc reset 0`. | `/uhc reset gameplay` |
 | `/uhc reset generation` | Restore world-generation frequency options to defaults. Run regeneration for them to affect terrain. Legacy alias: `/uhc reset 1`. | `/uhc reset generation` |
-| `/uhc regen` | Request destructive world regeneration. Run the command a second time to confirm. | `/uhc regen` twice |
+| `/uhc regen` | Request destructive world regeneration and advance to the next lobby. Run the command a second time to confirm. | `/uhc regen` twice |
 | `/uhc cancelRegen` | Cancel a pending regeneration confirmation. | `/uhc cancelRegen` |
 | `/uhc start` | Request a normal start after readiness checks. Run it a second time to confirm. | `/uhc start` twice |
 | `/uhc forceStart` | Request a start that bypasses pre-generation readiness. Run it a second time to confirm. | `/uhc forceStart` twice |
@@ -60,6 +60,8 @@ Enum inputs accept constant names without case sensitivity. The principal values
 | `disableOceanBiomes` | `true` | boolean | Replace ocean biomes with land outside Marine mode. |
 | `randomTeams` | `true` | boolean | Assign teams randomly instead of manually. |
 | `teamCount` | `4` | 2–8, step 1 | Number of teams in Normal mode. |
+| `enemyCompass` | `true` | boolean | Enable enemy compass tracking and held-item hints in all modes; applies immediately. |
+| `compassInterval` | `0` | 0–300 game seconds, step 5 | 0 selects the mode default (60 seconds normally, 1 for hunter modes); 1–300 overrides it and triggers a fresh fix immediately. |
 | `difficulty` | `HARD` | vanilla difficulty | Match difficulty. |
 | `weather` | `NORMAL` | weather enum | Forced match weather or normal behavior. |
 | `daylightCycle` | `true` | boolean | Enable the day/night cycle. |

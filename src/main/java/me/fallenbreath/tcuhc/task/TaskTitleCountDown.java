@@ -138,6 +138,7 @@ public class TaskTitleCountDown extends TaskTimer {
 			UhcGameManager.instance.addTask(new TaskKingEffectField());
 		}
 		UhcGameManager.instance.addTask(new TaskScoreboard());
+		UhcGameManager.instance.addTask(new TaskEnemyCompass());
 	}
 
 	private static RegistryEntry<net.minecraft.enchantment.Enchantment> getEnchantment(net.minecraft.registry.RegistryKey<net.minecraft.enchantment.Enchantment> key) {

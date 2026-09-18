@@ -48,6 +48,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
+import java.nio.file.Files;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -189,6 +191,11 @@ public class UhcGameManager extends Taskable {
 		}
 		if (!preloaded) {
 			if (preGenBufferManager.isActiveGeneration() || uhcOptions.getBooleanOptionValue("pregenerateOnStart")) {
+				try {
+					Files.writeString(getWorldRootPath().resolve("pregenerating"), "Resume incomplete UHC pregeneration on restart\n");
+				} catch (IOException e) {
+					throw new UncheckedIOException("Cannot preserve world before pregeneration", e);
+				}
 				this.startPregenerateOverworld();
 				isPregenerating = true;
 			} else {
@@ -261,7 +268,8 @@ public class UhcGameManager extends Taskable {
 	/**
 	 * Single exit point for "this world finished pregenerating". It also owns the preload
 	 * marker, which doubles as the flag that tells {@link #tryUpdateSaveFolder} the world
-	 * directory may be kept: a world without it gets wiped on the next boot.
+	 * directory is complete. An unfinished world with a {@code pregenerating} marker is
+	 * also kept on restart, but resumes generation instead of being treated as ready.
 	 */
 	public void setPregenerateComplete() {
 		isPregenerating = false;
@@ -270,6 +278,7 @@ public class UhcGameManager extends Taskable {
 			if (!preload.exists() && !preload.createNewFile()) {
 				LOG.warn("Failed to create preload marker {}", preload);
 			}
+			if (preload.isFile()) Files.deleteIfExists(getWorldRootPath().resolve("pregenerating"));
 		} catch (IOException e) {
 			LOG.warn("Failed to create preload marker", e);
 		}
@@ -291,11 +300,16 @@ public class UhcGameManager extends Taskable {
 	}
 	
 	public static void tryUpdateSaveFolder(Path saveFolder) {
-		if (!saveFolder.resolve("preload").toFile().exists()) {
+		boolean complete = saveFolder.resolve("preload").toFile().exists();
+		boolean resume = Files.isRegularFile(saveFolder.resolve("pregenerating"));
+		boolean regenerating = !complete && !resume;
+		LobbyRotation.onWorldOpen(saveFolder, regenerating);
+		preloaded = complete;
+		if (regenerating) {
 			LOG.warn("Deleting {} for UHC world regenerate", saveFolder);
 			deleteFolder(saveFolder.toFile());
-		} else {
-			preloaded = true;
+		} else if (!complete) {
+			LOG.info("Preserving {} and resuming incomplete UHC pregeneration", saveFolder);
 		}
 	}
 
@@ -314,6 +328,10 @@ public class UhcGameManager extends Taskable {
 
 	public static File getDataFile() {
 		return ((MinecraftServerAccessor)instance.mcServer).getSession().getDirectory(WorldSavePath.ROOT).resolve("uhc.json").toFile();
+	}
+
+	public static Path getWorldRootPath() {
+		return ((MinecraftServerAccessor)instance.mcServer).getSession().getDirectory(WorldSavePath.ROOT).toAbsolutePath().normalize();
 	}
 
 	private static Path getServerRootPath() {
@@ -374,15 +392,34 @@ public class UhcGameManager extends Taskable {
 	
 	public static void regenerateTerrain() {
 		Path helperPath = getRegenRestartHelperPath();
-		// A mod can stop the dedicated server, but restarting the JVM must be delegated to an external helper.
-		launchRegenRestartHelper(helperPath);
+		Path worldRoot = getWorldRootPath();
+		String currentLobby = instance.worldData.lobbyTemplate != null ? instance.worldData.lobbyTemplate
+				: LobbyRotation.current(worldRoot);
+		String nextLobby = LobbyRotation.prepare(worldRoot, currentLobby);
+		try {
+			// The external helper waits for this JVM to exit before starting its replacement.
+			launchRegenRestartHelper(helperPath);
+			// Only an explicit regen removes the in-progress preservation marker.
+			try {
+				Files.deleteIfExists(worldRoot.resolve("pregenerating"));
+			} catch (IOException e) {
+				throw new UncheckedIOException("Failed to remove pregeneration recovery marker", e);
+			}
+			File preload = getPreloadFile();
+			if (preload.exists() && !preload.delete()) {
+				throw new IllegalStateException("Failed to delete preload marker: " + preload);
+			}
+		} catch (RuntimeException e) {
+			try { LobbyRotation.cancel(worldRoot); }
+			catch (RuntimeException rollback) { e.addSuppressed(rollback); }
+			throw e;
+		}
 		instance.cancelTasks();
 		instance.isPregenerating = false;
-		File preload = getPreloadFile();
-		if (preload.exists() && !preload.delete()) {
-			throw new IllegalStateException("Failed to delete preload marker: " + preload);
-		}
-		instance.broadcastMessage("地形重生成已确认，服务器即将自动重启。请稍候重新连接。");
+		LOG.info("Lobby rotation scheduled: {} -> {}", currentLobby, nextLobby);
+		instance.broadcastMessage("地形重生成已确认，下次大厅："
+				+ LobbyDefinition.byId(nextLobby).displayName
+				+ "。服务器即将自动重启，请稍候重新连接。");
 		instance.mcServer.stop(false);
 	}
 	
@@ -694,7 +731,7 @@ public class UhcGameManager extends Taskable {
 		// Give-or-refresh, never a blind insert: running /uhc config twice used to leave the
 		// operator holding two config books, and every later edit refreshed only one of them.
 		playerManager.giveOrRefreshConfigBook(operator);
-		if (!UhcGameManager.instance.isGamePlaying()) SpawnPlatform.generateSafePlatform(getOverWorld());
+		if (!UhcGameManager.instance.isGamePlaying()) SpawnPlatform.validateSpawnPositions(getOverWorld());
 	}
 
 	/**
@@ -721,12 +758,13 @@ public class UhcGameManager extends Taskable {
 			scoreboard.removeTeam((Team) team);
 		}
 
+		// Restore the template and its safe positions before teleporting players back.
+		this.generateSpawnPlatform();
 		playerManager.resetForNextGame();
 		// Back to vanilla behaviour outside a match; initWorlds turns it on again next game.
 		for (ServerWorld world : mcServer.getWorlds()) {
 			world.getGameRules().get(GameRules.DO_IMMEDIATE_RESPAWN).set(false, mcServer);
 		}
-		this.generateSpawnPlatform();
 		this.addTask(new TaskHUDInfo(mcServer));
 		this.broadcastMessage(Formatting.GOLD + "已返回大厅，可以配置下一局游戏了。");
 	}

@@ -22,7 +22,7 @@
 | `/uhc reset` | 解释可用的重置范围；单独执行不会修改任何配置。 | `/uhc reset` |
 | `/uhc reset gameplay` | 把玩法、时间、队伍及启动选项恢复为模组默认值。旧写法：`/uhc reset 0`。 | `/uhc reset gameplay` |
 | `/uhc reset generation` | 把世界生成频率配置恢复为默认值，需要重新生成世界后生效。旧写法：`/uhc reset 1`。 | `/uhc reset generation` |
-| `/uhc regen` | 请求删除并重新生成当前比赛世界；再次输入相同命令确认。 | 连续两次 `/uhc regen` |
+| `/uhc regen` | 请求删除并重新生成当前比赛世界，同时轮换到下一座出生大厅；再次输入相同命令确认。 | 连续两次 `/uhc regen` |
 | `/uhc cancelRegen` | 取消等待确认的世界重新生成。 | `/uhc cancelRegen` |
 | `/uhc start` | 完成就绪检查后请求正常开局；再次输入确认。 | 连续两次 `/uhc start` |
 | `/uhc forceStart` | 跳过预生成就绪条件请求开局；再次输入确认。 | 连续两次 `/uhc forceStart` |
@@ -60,6 +60,8 @@
 | `disableOceanBiomes` | `true` | 布尔值 | 非海战模式下把海洋群系替换为陆地。 |
 | `randomTeams` | `true` | 布尔值 | 随机分队或手动选队。 |
 | `teamCount` | `4` | 2–8，步长 1 | 普通模式队伍数量。 |
+| `enemyCompass` | `true` | 布尔值 | 敌人指南针与持有提示总开关，所有模式立即生效。 |
+| `compassInterval` | `0` | 0–300 游戏秒，步长 5 | 0 为自动（普通 60 秒、猎人 1 秒）；1–300 为自定义，立即重新定位。 |
 | `difficulty` | `HARD` | 原版难度 | 对局难度。 |
 | `weather` | `NORMAL` | 天气枚举 | 强制天气或保持正常天气。 |
 | `daylightCycle` | `true` | 布尔值 | 是否启用昼夜循环。 |

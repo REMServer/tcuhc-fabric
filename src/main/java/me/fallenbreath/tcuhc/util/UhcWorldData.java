@@ -10,6 +10,8 @@ import java.util.Random;
 public class UhcWorldData
 {
 	public int spawnPlatformHeight = -1;
+	/** Fixed for this world; a confirmed regen selects the next template. */
+	public String lobbyTemplate = null;
 	public StructureType netherFortressType = StructureType.randomChoose();
 
 	/**
@@ -28,7 +30,8 @@ public class UhcWorldData
 
 	private UhcWorldData()
 	{
-		this.save();
+		// Gson also calls this constructor while loading an existing save. Writing here
+		// would replace that file with defaults before its fields have been restored.
 	}
 
 	public boolean isSpawnPlatformHeightValid()
@@ -76,7 +79,9 @@ public class UhcWorldData
 			{
 				UhcGameManager.LOG.error("Failed to read uhc world data file", e);
 			}
-			return new UhcWorldData();
+			UhcWorldData data = new UhcWorldData();
+			data.save();
+			return data;
 		}
 	}
 

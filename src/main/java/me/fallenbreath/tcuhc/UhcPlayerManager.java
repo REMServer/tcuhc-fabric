@@ -274,8 +274,8 @@ public class UhcPlayerManager
 	
 	public void randomSpawnPosition(ServerPlayerEntity player) {
 		BlockPos pos = SpawnPlatform.getRandomSpawnPosition(UhcGameManager.rand);
-		player.updatePosition(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
-		player.requestTeleport(player.getPos().getX(), player.getPos().getY(), player.getPos().getZ());
+		// The lobby is in the overworld, including when returning from another dimension.
+		player.teleport(gameManager.getOverWorld(), pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 0.0F, 0.0F);
 		player.fallDistance = 0.0f;
 	}
 	

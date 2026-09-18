@@ -14,7 +14,6 @@ import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.item.EnchantedBookItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -75,7 +74,6 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 	private static final RegistryKey<Enchantment>[] NORMAL_ENCHANTMENTS = new RegistryKey[]{
 			net.minecraft.enchantment.Enchantments.POWER,
 			net.minecraft.enchantment.Enchantments.SHARPNESS,
-			net.minecraft.enchantment.Enchantments.EFFICIENCY,
 			net.minecraft.enchantment.Enchantments.FIRE_ASPECT,
 			net.minecraft.enchantment.Enchantments.PROTECTION,
 			net.minecraft.enchantment.Enchantments.PROJECTILE_PROTECTION
@@ -83,7 +81,6 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 	private static final RegistryKey<Enchantment>[] MARINE_ENCHANTMENTS = new RegistryKey[]{
 			net.minecraft.enchantment.Enchantments.POWER,
 			net.minecraft.enchantment.Enchantments.SHARPNESS,
-			net.minecraft.enchantment.Enchantments.EFFICIENCY,
 			net.minecraft.enchantment.Enchantments.FIRE_ASPECT,
 			net.minecraft.enchantment.Enchantments.PROTECTION,
 			net.minecraft.enchantment.Enchantments.PROJECTILE_PROTECTION,
@@ -97,7 +94,6 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 	private static final RegistryKey<Enchantment>[] ICARUS_ENCHANTMENTS = new RegistryKey[]{
 			net.minecraft.enchantment.Enchantments.POWER,
 			net.minecraft.enchantment.Enchantments.SHARPNESS,
-			net.minecraft.enchantment.Enchantments.EFFICIENCY,
 			net.minecraft.enchantment.Enchantments.FIRE_ASPECT,
 			net.minecraft.enchantment.Enchantments.PROTECTION,
 			net.minecraft.enchantment.Enchantments.PROJECTILE_PROTECTION,
@@ -278,7 +274,9 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 		else
 		{
 			fillChestItems(chest, buildCommonItems(), random, false);
-			fillChestItems(chest, buildValuableItems(world, random), random, true);
+			fillChestItems(chest, buildValuableItems(random), random, true);
+			// Books get their own roll, so an earlier diamond/tool reward cannot suppress them.
+			createBonusBook(world, random).ifPresent(book -> placeBookInEmptySlot(chest, book, random));
 		}
 		placedCount++;
 		if (placedCount % LOG_INTERVAL == 0)
@@ -328,19 +326,16 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 		return items;
 	}
 
-	private static List<RandomItem> buildValuableItems(StructureWorldAccess world, Random random)
+	private static List<RandomItem> buildValuableItems(Random random)
 	{
 		List<RandomItem> items = new ArrayList<>();
 		items.add(new RandomItem(16, ignored -> new ItemStack(Items.DIAMOND_SWORD)));
 		items.add(new RandomItem(24, ignored -> new ItemStack(Items.DIAMOND_PICKAXE)));
 		items.add(new RandomItem(20, ignored -> new ItemStack(Items.GOLDEN_APPLE)));
 		items.add(new RandomItem(8, ignored -> new ItemStack(Items.DIAMOND)));
-		items.add(new RandomItem(16, ignored -> createEnchantedBook(world, random)));
 		if (UhcGameManager.getBattleType() == UhcGameManager.EnumBattleType.MARINE)
 		{
 			items.add(new RandomItem(8, ignored -> PotionContentsComponent.createStack(Items.POTION, Potions.WATER_BREATHING)));
-			items.add(new RandomItem(64, ignored -> createSpecificEnchantedBook(world, net.minecraft.enchantment.Enchantments.CHANNELING, 1)));
-			items.add(new RandomItem(64, ignored -> createSpecificEnchantedBook(world, net.minecraft.enchantment.Enchantments.RIPTIDE, 1)));
 			items.add(new RandomItem(16, ignored -> new ItemStack(Items.TRIDENT)));
 			items.add(new RandomItem(8, ignored -> new ItemStack(Items.APPLE)));
 		}
@@ -362,6 +357,30 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 			return stack;
 		}));
 		return items;
+	}
+
+	private static Optional<ItemStack> createBonusBook(StructureWorldAccess world, Random random)
+	{
+		// One exclusive roll: 4/64 random books, plus 1/64 each for the two marine specials.
+		// The remaining outcomes give no book, preserving a limited supply and at most one per chest.
+		int roll = random.nextInt(64);
+		if (roll < 4) return Optional.of(createEnchantedBook(world, random));
+		if (UhcGameManager.getBattleType() == UhcGameManager.EnumBattleType.MARINE)
+		{
+			if (roll == 4) return Optional.of(createSpecificEnchantedBook(world, net.minecraft.enchantment.Enchantments.CHANNELING, 1));
+			if (roll == 5) return Optional.of(createSpecificEnchantedBook(world, net.minecraft.enchantment.Enchantments.RIPTIDE, 1));
+		}
+		return Optional.empty();
+	}
+
+	private static void placeBookInEmptySlot(ChestBlockEntity chest, ItemStack book, Random random)
+	{
+		List<Integer> emptySlots = new ArrayList<>();
+		for (int slot = 0; slot < chest.size(); slot++)
+		{
+			if (chest.getStack(slot).isEmpty()) emptySlots.add(slot);
+		}
+		if (!emptySlots.isEmpty()) chest.setStack(emptySlots.get(random.nextInt(emptySlots.size())), book);
 	}
 
 	private static ItemStack createEnchantedBook(StructureWorldAccess world, Random random)
@@ -386,7 +405,9 @@ public class BonusChestFeature extends Feature<DefaultFeatureConfig>
 
 	private static ItemStack createSpecificEnchantedBook(StructureWorldAccess world, RegistryKey<Enchantment> key, int level)
 	{
-		return EnchantedBookItem.forEnchantment(new net.minecraft.enchantment.EnchantmentLevelEntry(getEnchantment(world, key), level));
+		RegistryEntry<Enchantment> enchantment = getEnchantment(world, key);
+		int validLevel = Math.max(enchantment.value().getMinLevel(), Math.min(level, enchantment.value().getMaxLevel()));
+		return EnchantedBookItem.forEnchantment(new net.minecraft.enchantment.EnchantmentLevelEntry(enchantment, validLevel));
 	}
 
 	private static RegistryEntry<Enchantment> getEnchantment(StructureWorldAccess world, RegistryKey<Enchantment> key)
