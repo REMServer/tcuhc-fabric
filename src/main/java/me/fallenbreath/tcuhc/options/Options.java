@@ -109,6 +109,8 @@ public class Options {
 		addOption(new Option("disableOceanBiomes", "禁用海洋群系", new OptionType.BooleanType(), true).addTask(taskReselectTeam).setDescription("非海战模式下不生成任何海洋群系，海洋区域改为同温度的陆地群系，世界以大陆为主。海战模式始终使用纯海洋地形。修改后需要 /uhc regen 重新生成世界才会生效。"));
 		addOption(new Option("randomTeams", "随机分队", new OptionType.BooleanType(), true).addTask(taskReselectTeam).setDescription("队伍随机分配还是手动选择，在单人模式下无效。"));
 		addOption(new Option("teamCount", "队伍数量", new OptionType.IntegerType(2, 8, 1), 4).addTask(taskReselectTeam).setDescription("不同队伍的数量，只在普通模式下生效。"));
+		addOption(new Option("enemyCompass", "敌人指南针", new OptionType.BooleanType(), true).setDescription("启用指南针敌人定位及持有时的方向、距离提示。关闭后恢复普通指南针指向，不移除物品；所有模式立即生效。"));
+		addOption(new Option("compassInterval", "定位间隔", new OptionType.IntegerType(0, 300, 5), 0).setDescription("两次敌人定位之间的游戏秒数：0 为自动（普通模式 60 秒，猎人/幽灵猎人 1 秒），1～300 为自定义秒数。左右按钮每次增减 5 秒，也可点击数值直接输入；修改后立即重新定位。"));
 
 		addOption(new Option("difficulty", "游戏难度", new OptionType.EnumType(Difficulty.class), Difficulty.HARD).setDescription("对局使用的游戏难度。"));
 		addOption(new Option("weather", "天气", new OptionType.EnumType(UhcGameManager.Weather.class), UhcGameManager.Weather.NORMAL).setDescription("对局中的天气。"));

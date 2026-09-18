@@ -17,6 +17,7 @@ This branch targets **Minecraft 1.21.1** and currently builds **TC UHC 1.2.9**.
 - An Iceland NBT lobby with safe spawn positions, creative editing, and protection for its blocks and decorations.
 - A match sidebar with minute/second countdowns, alive player/team totals, and compact final boundary information.
 - Independent enchanted-book rewards in bonus chests, using battle-specific pools and valid enchantment levels.
+- Enemy compass action-bar hints with relative direction, approximate distance, and the age of the last location fix; configurable on page 1 without adding book pages.
 - Dedicated-server operation with no client-side mod requirement.
 
 ## Requirements
@@ -134,6 +135,7 @@ python scripts/github_release.py --release
 - [Development and verification notes](docs/agent_run/)
 - [Iceland NBT lobby — 简体中文](docs/lobby-iceland.md)
 - [Match sidebar — 简体中文](docs/sidebar.md)
+- [Enemy compass hints — 简体中文](docs/enemy-compass.md)
 - [Enchanted-book rewards — 简体中文](docs/enchanted-book-generation.md)
 - [Lobby, sidebar, and reward development record](docs/agent_run/2026-09-16-lobby-change/README.md)
 

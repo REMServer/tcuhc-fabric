@@ -60,6 +60,8 @@
 | `disableOceanBiomes` | `true` | 布尔值 | 非海战模式下把海洋群系替换为陆地。 |
 | `randomTeams` | `true` | 布尔值 | 随机分队或手动选队。 |
 | `teamCount` | `4` | 2–8，步长 1 | 普通模式队伍数量。 |
+| `enemyCompass` | `true` | 布尔值 | 敌人指南针与持有提示总开关，所有模式立即生效。 |
+| `compassInterval` | `0` | 0–300 游戏秒，步长 5 | 0 为自动（普通 60 秒、猎人 1 秒）；1–300 为自定义，立即重新定位。 |
 | `difficulty` | `HARD` | 原版难度 | 对局难度。 |
 | `weather` | `NORMAL` | 天气枚举 | 强制天气或保持正常天气。 |
 | `daylightCycle` | `true` | 布尔值 | 是否启用昼夜循环。 |

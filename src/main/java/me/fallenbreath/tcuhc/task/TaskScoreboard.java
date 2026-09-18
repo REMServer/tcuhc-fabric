@@ -10,7 +10,6 @@ import me.fallenbreath.tcuhc.UhcGameTeam;
 import me.fallenbreath.tcuhc.UhcPlayerManager;
 import me.fallenbreath.tcuhc.options.Options;
 import me.fallenbreath.tcuhc.task.Task.TaskTimer;
-import net.minecraft.network.packet.s2c.play.PlayerSpawnPositionS2CPacket;
 import net.minecraft.scoreboard.ScoreAccess;
 import net.minecraft.scoreboard.ScoreHolder;
 import net.minecraft.scoreboard.Scoreboard;
@@ -19,7 +18,6 @@ import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ReadableScoreboardScore;
 import net.minecraft.scoreboard.number.FixedNumberFormat;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -108,35 +106,8 @@ public class TaskScoreboard extends TaskTimer {
 		score = scoreboard.getOrCreateScore(ScoreHolder.fromName(lines[3]), objective);
 		setTimeRow(lines[3], Math.max(0, score.getScore() - 1));
 
-		switch (UhcGameManager.getGameMode()) {
-			case HUNTER:
-				if(timeRemaining == 0)
-					UhcGameManager.instance.onTeamWin(UhcGameManager.instance.getUhcPlayerManager().getPreyTeam());
-			case GHOSTHUNTER:
-				updateHunterCompassRotation();
-				break;
-			default:
-				if (timeRemaining % 60 == 0)
-					updateCompassRotation();
-			}
-	}
-
-	private void updateCompassRotation() {
-		for (UhcGamePlayer player : UhcGameManager.instance.getUhcPlayerManager().getCombatPlayers()) {
-			if (player.isAlive()) {
-				if (player.getRealPlayer().isPresent()) {
-					ServerPlayerEntity playermp = player.getRealPlayer().get();
-					ServerPlayerEntity target = null;
-					for (UhcGamePlayer tmpTarget : UhcGameManager.instance.getUhcPlayerManager().getCombatPlayers()) {
-						if (tmpTarget.isAlive() && player.getTeam() != tmpTarget.getTeam() && tmpTarget.getRealPlayer().isPresent()) {
-							if (target == null || playermp.squaredDistanceTo(target) > playermp.squaredDistanceTo(tmpTarget.getRealPlayer().get()))
-								target = tmpTarget.getRealPlayer().get();
-						}
-					}
-					if (target != null)
-						playermp.networkHandler.sendPacket(new PlayerSpawnPositionS2CPacket(target.getBlockPos(), 0));
-				}
-			}
+		if (UhcGameManager.getGameMode() == UhcGameManager.EnumMode.HUNTER && timeRemaining == 0) {
+			UhcGameManager.instance.onTeamWin(UhcGameManager.instance.getUhcPlayerManager().getPreyTeam());
 		}
 	}
 
@@ -174,24 +145,6 @@ public class TaskScoreboard extends TaskTimer {
 		// Existing timer scores remain numeric because match rules read them directly.
 		score.setScore(order);
 		if (changed) score.setNumberFormat(new FixedNumberFormat(formatted));
-	}
-
-	private void updateHunterCompassRotation() {
-		UhcPlayerManager playerManager = UhcGameManager.instance.getUhcPlayerManager();
-		for (UhcGamePlayer player : playerManager.getCombatPlayers()) {
-			if (player.isAlive() && player.getRealPlayer().isPresent()) {
-				ServerPlayerEntity playermp = player.getRealPlayer().get();
-				ServerPlayerEntity target = null;
-				for (UhcGamePlayer tmpTarget : playerManager.getPreyTeam().getPlayers()) {
-					if (tmpTarget.isAlive() && player.getTeam() != tmpTarget.getTeam() && tmpTarget.getRealPlayer().isPresent()) {
-						if (target == null || playermp.squaredDistanceTo(target) > playermp.squaredDistanceTo(tmpTarget.getRealPlayer().get()))
-							target = tmpTarget.getRealPlayer().get();
-					}
-				}
-				if (target != null)
-					playermp.networkHandler.sendPacket(new PlayerSpawnPositionS2CPacket(target.getBlockPos(), 0));
-			}
-		}
 	}
 
 	public static void hideScoreboard() {

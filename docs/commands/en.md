@@ -60,6 +60,8 @@ Enum inputs accept constant names without case sensitivity. The principal values
 | `disableOceanBiomes` | `true` | boolean | Replace ocean biomes with land outside Marine mode. |
 | `randomTeams` | `true` | boolean | Assign teams randomly instead of manually. |
 | `teamCount` | `4` | 2–8, step 1 | Number of teams in Normal mode. |
+| `enemyCompass` | `true` | boolean | Enable enemy compass tracking and held-item hints in all modes; applies immediately. |
+| `compassInterval` | `0` | 0–300 game seconds, step 5 | 0 selects the mode default (60 seconds normally, 1 for hunter modes); 1–300 overrides it and triggers a fresh fix immediately. |
 | `difficulty` | `HARD` | vanilla difficulty | Match difficulty. |
 | `weather` | `NORMAL` | weather enum | Forced match weather or normal behavior. |
 | `daylightCycle` | `true` | boolean | Enable the day/night cycle. |

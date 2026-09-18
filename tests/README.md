@@ -18,4 +18,6 @@ The dedicated-server smoke test is destructive to the development `run` director
 python tests/smoke_server.py --allow-local
 ```
 
+The compass geometry check compiles the production Java helper with the local JDK and exercises direction and distance formatting.
+
 The suite checks resource JSON, Fabric metadata, Java source invariants, mixin registration, option and command coverage, corrected gameplay algorithms, and pre-generation buffer lifecycle contracts. The Gradle and smoke commands cover compilation, packaging, and server startup. Multiplayer behavior that requires real client connections still needs the manual procedures under `docs/agent_run/`.
